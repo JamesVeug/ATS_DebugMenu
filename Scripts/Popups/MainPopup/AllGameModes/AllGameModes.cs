@@ -6,16 +6,6 @@ namespace DebugMenu.Scripts.All;
 
 public class AllGameModes : BaseGameMode
 {
-	private static bool blockAllInput = false;
-
-	public static bool IsInputBlocked()
-	{
-		if(blockAllInput)
-			return true;
-
-		return Plugin.Instance.IsInputBlocked();
-	}
-	
 	public AllGameModes(DebugWindow window) : base(window)
 	{
 	}
@@ -27,8 +17,7 @@ public class AllGameModes : BaseGameMode
 	
 	public override void OnGUI()
 	{
-		// TODO
-		// Window.Toggle("Block All Input", ref blockAllInput);
+		Input.DrawToggleBlockInput(Window);
 
 		using (Window.HorizontalScope(5))
 		{

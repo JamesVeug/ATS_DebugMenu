@@ -50,7 +50,8 @@ namespace DebugMenu
 		    blockerParent.AddComponent<GraphicRaycaster>();
 		    blockerParent.transform.SetParent(transform);
 
-		    harmony = Harmony.CreateAndPatchAll(typeof(Plugin), PluginGuid);
+		    Input.Initialize();
+		    harmony = Harmony.CreateAndPatchAll(typeof(Plugin).Assembly, PluginGuid);
 
 		    // Get all types of BaseWindow, instantiate them and add them to allwindows
 		    Type[] types = Assembly.GetExecutingAssembly().GetTypes();
