@@ -21,8 +21,10 @@ public class InventoryWindow : BaseWindow
 	private bool showEatables = true;
 	private bool showFuels = true;
 	private bool showOther = true;
+	private bool[] favourites = new bool[]{true,true};
 	private bool[] ownershipType = new bool[]{true,true};
 	private bool hideEffectsWithMissingKeys = true;
+	private List<GoodModel> allGoods = null;
 
 	public override void OnGUI()
 	{
@@ -37,7 +39,12 @@ public class InventoryWindow : BaseWindow
 
 		LockedGoodsCollection storage = storageService.Main.Goods;
 
-		List<GoodModel> allGoods = Serviceable.Settings.Goods.OrderBy(a=>a.displayName.GetText()).ToList();
+		if (allGoods == null)
+		{
+			allGoods = Serviceable.Settings.Goods.ToList();
+			SortGoods();
+		}
+
 		List<GoodModel> itemsInStorage = new List<GoodModel>(storage.goods.Keys.Select(a=>Serviceable.Settings.GetGood(a)));
 
 		// Longer rows
@@ -55,13 +62,17 @@ public class InventoryWindow : BaseWindow
 
 		Label("Filter", new(0, RowHeight / 2));
 		filterText = TextField(filterText, new(0, RowHeight / 2));
-		
-		Toggle("Eatables", ref showEatables, new(0, RowHeight / 2));
-		Toggle("Fuels", ref showFuels, new(0, RowHeight / 2));
-		Toggle("Other", ref showOther, new(0, RowHeight / 2));
+
+		Label("Favourite", new(0, RowHeight / 2));
+		RadialButtons(favourites, new[] { "Favourited", "NotFavourited" }, RowHeight / 2);
 
 		Label("Ownership", new(0, RowHeight / 2));
 		RadialButtons(ownershipType, new[] { "Owned", "NotOwned" }, RowHeight / 2);
+		
+		Label("Categories", new(0, RowHeight / 2));
+		Toggle("Eatables", ref showEatables, new(0, RowHeight / 2));
+		Toggle("Fuels", ref showFuels, new(0, RowHeight / 2));
+		Toggle("Other", ref showOther, new(0, RowHeight / 2));
 		
 		Label("Other", new(0, RowHeight / 2));
 		Toggle("Hide Missing Keys", ref hideEffectsWithMissingKeys);
@@ -75,35 +86,23 @@ public class InventoryWindow : BaseWindow
 		for (int i = 0; i < namesCount; i++)
 		{
 			GoodModel good = allGoods[i];
-			GoodModel ownedGood = itemsInStorage.FirstOrDefault(a=>a.name == good.Name);
-			if (ownedGood == null && !ownershipType[1])
+			bool isFavourited = Plugin.SaveData.favouritedGoods.Contains(good.name);
+			if (!IsFiltered(itemsInStorage, good, isFavourited)) 
 				continue;
-			if (ownedGood != null && !ownershipType[0])
-				continue;
-			if (hideEffectsWithMissingKeys && string.IsNullOrEmpty(good.displayName.key))
-				continue;
-			if (!showEatables && good.eatable)
-				continue;
-			if (!showFuels && good.canBeBurned)
-				continue;
-			if (!showOther && !good.canBeBurned && !good.eatable)
-				continue;
-			
-			string displayName = good.displayName.GetText();
-			string description = good.Description;
-			if (!string.IsNullOrEmpty(filterText))
-			{
-				if (!displayName.ContainsText(filterText, false) &&
-				    !description.ContainsText(filterText, false))
-				{
-					continue;
-				}
-			}
-			
+
 			storage.goods.TryGetValue(good.name, out int amount);
 			using (HorizontalScope(4))
 			{
 				Label(good.icon);
+				if(Button(isFavourited ? "\u2713" : "X", new Vector2(30, 0)))
+				{
+					if (isFavourited)
+						Plugin.SaveData.favouritedGoods.Remove(good.name);
+					else
+						Plugin.SaveData.favouritedGoods.Add(good.name);
+					SaveDataChanged();
+				}
+				
 				if(Button("-", new Vector2(30, 0)))
 				{
 					storage.Remove(good.name, amountToAdd);
@@ -128,30 +127,38 @@ public class InventoryWindow : BaseWindow
 		GUI.EndScrollView();
 	}
 
-	private void RadialButtons(ref ShowAll type, float rowHeight)
+	private bool IsFiltered(List<GoodModel> itemsInStorage, GoodModel good, bool favourited)
 	{
-		Vector2 size = new Vector2(ColumnWidth / 3, rowHeight);
-
-		using (HorizontalScope(3))
+		GoodModel ownedGood = itemsInStorage.FirstOrDefault(a=>a.name == good.Name);
+		if (!favourited && !favourites[1])
+			return false;
+		if (favourited && !favourites[0])
+			return false;
+		if (ownedGood == null && !ownershipType[1])
+			return false;
+		if (ownedGood != null && !ownershipType[0])
+			return false;
+		if (hideEffectsWithMissingKeys && string.IsNullOrEmpty(good.displayName.key))
+			return false;
+		if (!showEatables && good.eatable)
+			return false;
+		if (!showFuels && good.canBeBurned)
+			return false;
+		if (!showOther && !good.canBeBurned && !good.eatable)
+			return false;
+			
+		string displayName = good.displayName.GetText();
+		string description = good.Description;
+		if (!string.IsNullOrEmpty(filterText))
 		{
-			bool o = type == ShowAll.Any;
-			if (Toggle("Any", ref o, size))
+			if (!displayName.ContainsText(filterText, false) &&
+			    !description.ContainsText(filterText, false))
 			{
-				type = ShowAll.Any;
-			}
-			
-			o = type == ShowAll.Only;
-			if (Toggle("Only", ref o, size))
-			{
-				type = ShowAll.Only;
-			}
-			
-			o = type == ShowAll.Except;
-			if (Toggle("Except", ref o, size))
-			{
-				type = ShowAll.Except;
+				return false;
 			}
 		}
+
+		return true;
 	}
 
 	private void RadialButtons(bool[] type, string[] buttons, float height)
@@ -171,21 +178,22 @@ public class InventoryWindow : BaseWindow
 		}
 	}
 
-	public IEnumerable<EffectModel> GetAllConditions()
+	private void SortGoods()
 	{
-		var effectModels = (from e in Serviceable.StateService.Conditions.earlyEffects
-				.Concat(Serviceable.StateService.Conditions.lateEffects)
-				.Concat(Serviceable.WorldStateService.Cycle.activeEventsEffects)
-			select Serviceable.Settings.GetEffect(e));
+		allGoods.Sort(static (a, b) =>
+		{
+			bool aFav = Plugin.SaveData.favouritedGoods.Contains(a.name);
+			bool bFav = Plugin.SaveData.favouritedGoods.Contains(b.name);
+			if(aFav != bFav)
+				return aFav ? -1 : 1;
+			
+			return a.displayName.GetText().CompareTo(b.displayName.GetText());
+		});
+	}
 
-		var modifiers = Serviceable.BiomeService.Difficulty.modifiers;
-		
-		return (from e in effectModels
-				.Concat(Serviceable.Biome.effects)
-				.Concat(Serviceable.Biome.seasons.SeasonRewards.SelectMany((SeasonRewardModel m) => m.effectsTable.GetAllEffects()))
-				.Concat(Serviceable.Biome.earlyEffects)
-				orderby e.IsPositive, e.DisplayName select e)
-			.Concat(from e in modifiers
-			select e.effect);
+	private void SaveDataChanged()
+	{
+		Plugin.SaveData.Save();
+		SortGoods();
 	}
 }

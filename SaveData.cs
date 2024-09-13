@@ -10,6 +10,7 @@ public class SaveData
     public static string Path => Application.persistentDataPath + "/DebugMenuSaveData.json";
     
     public List<string> favouritedPerks = new List<string>();
+    public List<string> favouritedGoods = new List<string>();
 
     public void Save()
     {

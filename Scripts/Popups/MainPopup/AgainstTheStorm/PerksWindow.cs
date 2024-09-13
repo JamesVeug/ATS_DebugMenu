@@ -8,7 +8,6 @@ using Eremite.Model;
 using Eremite.Model.State;
 using Eremite.Services;
 using UnityEngine;
-using ErrorEventArgs = Newtonsoft.Json.Serialization.ErrorEventArgs;
 
 namespace DebugMenu.Scripts.Acts;
 
