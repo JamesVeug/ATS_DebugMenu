@@ -38,11 +38,12 @@ public class PerksWindow : BaseWindow
 	public override bool ClosableWindow => true;
 
 	private Dictionary<string, Effect> allEffectsLookup = null;
-	private List<Effect> allEffects = null;
+	private List<Effect> orderedEffects = null;
 	
 	private Vector2 position;
 	private string filterText = "";
 	private bool hideEffectsWithMissingKeys = true;
+	private bool[] favourites = new bool[]{true,true};
 	private bool[] ownershipType = new bool[]{true,true};
 	private bool[] benefitType = new bool[]{true,true};
 	private bool[] effectType = new bool[]{false,false,true};
@@ -77,7 +78,7 @@ public class PerksWindow : BaseWindow
 		ColumnWidth = 200;
 
 		const int scrollableColumnWidth = 300;
-		int namesCount = allEffects.Count; // 20
+		int namesCount = orderedEffects.Count; // 20
 		int rows = Mathf.Max(Mathf.FloorToInt((Size.y - TopOffset) / RowHeight) - 1, 1); // 600 / 40 = 15 
 		int columns = Mathf.CeilToInt((float)namesCount / rows) + 1; // 20 / 15 = 4
 		Rect scrollableAreaSize = new(new Vector2(0, 0), new Vector2(columns *  scrollableColumnWidth + (columns - 1) * 10, rows * RowHeight));
@@ -94,19 +95,29 @@ public class PerksWindow : BaseWindow
 		int j = 0;
 		for (int i = 0; i < namesCount; i++)
 		{
-			EffectModel cornerStone = allEffects[i].model;
-			if (!FilterEffect(cornerStone, allEffects, i, ownedPerks, out PerkState ownedPerk)) 
+			EffectModel cornerStone = orderedEffects[i].model;
+			bool isFavourited = Plugin.SaveData.favouritedPerks.Contains(cornerStone.name);
+			if (!FilterEffect(cornerStone, orderedEffects, i, ownedPerks, isFavourited, out PerkState ownedPerk)) 
 				continue;
 
 			int stacks = ownedPerk == null ? 0 : ownedPerk.stacks;
 			using (HorizontalScope(3))
 			{
 				Label(cornerStone.GetIcon());
+				if(Button(isFavourited ? "\u2713" : "X", new Vector2(30, 0)))
+				{
+					if (isFavourited)
+						Plugin.SaveData.favouritedPerks.Remove(cornerStone.name);
+					else
+						Plugin.SaveData.favouritedPerks.Add(cornerStone.name);
+					SaveDataChanged();
+				}
+				
 				if(Button("-1", new Vector2(30, 0)))
 				{
 					cornerStone.Remove();
-					
 				}
+				
 				if(Button("+1", new Vector2(30, 0)))
 				{
 					cornerStone.Apply();
@@ -132,6 +143,9 @@ public class PerksWindow : BaseWindow
 		Label("Filter", new(0, RowHeight / 2));
 		filterText = TextField(filterText, new(0, RowHeight / 2));
 
+		Label("Favourite", new(0, RowHeight / 2));
+		RadialButtons(favourites, new[] { "Favourited", "NotFavourited" }, RowHeight / 2);
+		
 		Label("Ownership", new(0, RowHeight / 2));
 		RadialButtons(ownershipType, new[] { "Owned", "NotOwned" }, RowHeight / 2);
 		
@@ -160,7 +174,8 @@ public class PerksWindow : BaseWindow
 		}
 	}
 
-	private bool FilterEffect(EffectModel cornerStone, List<Effect> elements, int i, List<PerkState> ownedPerks, out PerkState perk)
+	private bool FilterEffect(EffectModel cornerStone, List<Effect> elements, int i, List<PerkState> ownedPerks, bool favourited,
+		out PerkState perk)
 	{
 		perk = null;
 		if (!string.IsNullOrEmpty(filterText))
@@ -172,6 +187,10 @@ public class PerksWindow : BaseWindow
 			}
 		}
 			
+		if (!favourited && !favourites[1])
+			return false;
+		if (favourited && !favourites[0])
+			return false;
 		if (!cornerStone.IsPositive && !benefitType[1])
 			return false;
 		if (cornerStone.isPositive && !benefitType[0])
@@ -180,7 +199,7 @@ public class PerksWindow : BaseWindow
 			return false;
 		if (hideEffectsWithMissingKeys && string.IsNullOrEmpty(cornerStone.DisplayNameKey))
 			return false;
-		if(rarityFilter[cornerStone.rarity] == false)
+		if (rarityFilter[cornerStone.rarity] == false)
 			return false;
 		
 			
@@ -191,11 +210,6 @@ public class PerksWindow : BaseWindow
 			return false;
 		
 		return true;
-	}
-
-	private static void Error(object sender, ErrorEventArgs e)
-	{
-		Plugin.Log.LogError(e.ErrorContext.Error.Message);
 	}
 
 	private void RadialButtons(bool[] type, string[] buttons, float height)
@@ -227,12 +241,6 @@ public class PerksWindow : BaseWindow
 			yield return new Effect(EffectType.Altar, effect.regularEffect);
 		}
 
-		// foreach (SimpleSeasonalEffectModel effect in SO.Settings.simpleSeasonalEffects)
-		// {
-		// 	yield return new Effect(EffectType.SeasonalEffect, effect.effect);
-		// }
-		
-        
 		var effectModels = (from e in Serviceable.StateService.Conditions.earlyEffects
 				.Concat(Serviceable.StateService.Conditions.lateEffects)
 				.Concat(Serviceable.WorldStateService.Cycle.activeEventsEffects)
@@ -265,13 +273,36 @@ public class PerksWindow : BaseWindow
 			}
 		}
 		
-		allEffects = allEffectsLookup.Values
-			.OrderBy((a)=>a.model.IsPositive)
-			.ThenBy((a)=>a.model.DisplayName)
-			.ToList();
-		Plugin.Log.LogInfo("AllEffects count: " + allEffects.Count);
-		// DumpPerksToJSON(allEffects);
+		orderedEffects = allEffectsLookup.Values.ToList();
+		SortEffects();
+		Plugin.Log.LogInfo("AllEffects count: " + orderedEffects.Count);
 		
-		Enum.GetValues(typeof(EffectRarity)).Cast<EffectRarity>().ToList().ForEach(a=>rarityFilter[a] = true);
+		// Setup rarity filter
+		foreach (EffectRarity a in Enum.GetValues(typeof(EffectRarity)))
+		{
+			rarityFilter[a] = true;
+		}
+	}
+
+	private void SortEffects()
+	{
+		orderedEffects.Sort(static (a, b) =>
+		{
+			bool aFavourited = Plugin.SaveData.favouritedPerks.Contains(a.model.Name);
+			bool bFavourited = Plugin.SaveData.favouritedPerks.Contains(b.model.Name);
+			if(aFavourited != bFavourited)
+				return aFavourited ? -1 : 1;
+			
+			if(a.model.IsPositive != b.model.IsPositive)
+				return a.model.IsPositive ? -1 : 1;
+			
+			return a.model.DisplayName.CompareTo(b.model.DisplayName);
+		});
+	}
+
+	private void SaveDataChanged()
+	{
+		Plugin.SaveData.Save();
+		SortEffects();
 	}
 }

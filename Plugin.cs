@@ -26,6 +26,7 @@ namespace DebugMenu
 	    public static float StartingFixedDeltaTime;
 
 	    public static List<BaseWindow> AllWindows = new();
+	    public static SaveData SaveData = null;
 	    
 	    private Harmony harmony;
 	    private GameObject blockerParent = null;
@@ -41,7 +42,7 @@ namespace DebugMenu
 
 		    PluginDirectory = this.Info.Location.Replace("DebugMenu.dll", "");
 
-		    blockerParent = new("DebugMenuBlocker");
+		    blockerParent = new("DebugMenuWindowBlocker");
 		    blockerParent.layer = LayerMask.NameToLayer("UI");
 		    blockerParentCanvas = blockerParent.AddComponent<Canvas>();
 		    blockerParentCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -70,6 +71,18 @@ namespace DebugMenu
 		    });
 
 		    DontDestroyOnLoad(gameObject);
+		    
+		    // Load save data last so if it exceptions then the plugin still loads
+		    try
+		    {
+			    SaveData = SaveData.Load();
+		    } 
+		    catch (Exception e)
+		    {
+			    Log.LogError($"Failed to load save data: {e}");
+			    SaveData = new SaveData();
+		    }
+
 		    Logger.LogInfo($"Loaded {PluginName}");
 	    }
 
