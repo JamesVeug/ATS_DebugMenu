@@ -5,4 +5,3 @@
   "description": "In-game menu that lets to edit/change the game",
   "dependencies": ["BepInEx-BepInExPack-5.4.2100", "ATS_API_Devs-API-1.2.4"]
 }
-

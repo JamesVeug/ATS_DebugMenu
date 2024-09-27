@@ -2,10 +2,12 @@
 - General
   - Supports ATS v1.4.024
 - Inventory window
+  - Added Favourite toggle 
   - Added text field to change how much you want to add/remove
   - Added eatable, fuel, other, Hide Missing Keys filters
   - Made the window bigger
 - Perk window
+  - Added Favourite toggle
   - Added rarity, Hide Missing Keys, type filters.
   - Made the window bigger
   - Effects now include altar, and all other generic effects
