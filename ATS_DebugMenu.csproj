@@ -4,7 +4,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <AssemblyName>DebugMenu</AssemblyName>
         <Description>UI Screen to change the game at runtime</Description>
-        <Version>1.1.0</Version>
+        <Version>2.0.0</Version>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>latest</LangVersion>
         <StormPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm</StormPath>

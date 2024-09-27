@@ -16,7 +16,7 @@ namespace DebugMenu
     {
 	    public const string PluginGuid = "jamesgames.againstthestorm.debugmenu";
 	    public const string PluginName = "Debug Menu";
-	    public const string PluginVersion = "1.1.0";
+	    public const string PluginVersion = "2.0.0";
 
 	    public static Plugin Instance;
 	    public static ManualLogSource Log;

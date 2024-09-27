@@ -1,3 +1,7 @@
+# 2.0.0
+- Bumped ATS version to 1.4.4v + DLC
+
+
 # 1.1.0
 - General
   - Supports ATS v1.4.024
