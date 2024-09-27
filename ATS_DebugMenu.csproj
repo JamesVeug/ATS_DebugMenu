@@ -63,6 +63,7 @@
         <!-- Create a folder with all the .dlls and files to easily uplaod to thunderstore -->
         <Copy SourceFiles="@(Assembly)" DestinationFolder="$(OutputPath)\ThunderStore\" />
         <Copy SourceFiles="README.md" DestinationFolder="$(OutputPath)\ThunderStore\" />
+        <Copy SourceFiles="CHANGELOG.md" DestinationFolder="$(OutputPath)\ThunderStore\" />
         <Copy SourceFiles="manifest.json" DestinationFolder="$(OutputPath)\ThunderStore\" />
         <Copy SourceFiles="icon.png" DestinationFolder="$(OutputPath)\ThunderStore\" />
 
@@ -73,6 +74,7 @@
         <!-- Create a thunderstore folders to AgainstTheStorm game folder -->
         <Copy SourceFiles="@(_CopyItems)" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\%(RecursiveDir)" />
         <Copy SourceFiles="README.md" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\" />
+        <Copy SourceFiles="CHANGELOG.md" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\" />
         <Copy SourceFiles="manifest.json" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\" />
         <Copy SourceFiles="icon.png" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\" />
         <Copy SourceFiles="@(Assembly)" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\" />
