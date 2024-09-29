@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using ATS_API;
 using BepInEx;
 using BepInEx.Logging;
 using DebugMenu.Scripts.Popups;
@@ -65,7 +66,7 @@ namespace DebugMenu
 			    }
 		    }
 		    
-		    Hotkeys.RegisterKey("Toggle Debug Menu", KeyCode.Tilde, () =>
+		    Hotkeys.RegisterKey(PluginName, "toggleDebug", "Show/Hide Debug Menu", [KeyCode.Tilde], () =>
 		    {
 			    Configs.ShowDebugMenu = !Configs.ShowDebugMenu;
 		    });
