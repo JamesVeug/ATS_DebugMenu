@@ -65,11 +65,6 @@ namespace DebugMenu
 				    AllWindows.Add((BaseWindow)Activator.CreateInstance(type));
 			    }
 		    }
-		    
-		    Hotkeys.RegisterKey(PluginName, "toggleDebug", "Show/Hide Debug Menu", [KeyCode.Tilde], () =>
-		    {
-			    Configs.ShowDebugMenu = !Configs.ShowDebugMenu;
-		    });
 
 		    DontDestroyOnLoad(gameObject);
 		    
@@ -83,6 +78,11 @@ namespace DebugMenu
 			    Log.LogError($"Failed to load save data: {e}");
 			    SaveData = new SaveData();
 		    }
+		    
+		    Hotkeys.RegisterKey(PluginName, "toggleDebug", "Show/Hide Debug Menu", [KeyCode.Tilde], () =>
+		    {
+			    Configs.ShowDebugMenu = !Configs.ShowDebugMenu;
+		    });
 
 		    Logger.LogInfo($"Loaded {PluginName}");
 	    }

@@ -1,5 +1,8 @@
+# 2.0.1
+- Fixed hotkey not working or showing in the options menu
+
 # 2.0.0
-- Bumped ATS version to 1.4.4v + DLC
+- Bumped ATS version to 1.4.4R + DLC
 
 
 # 1.1.0
