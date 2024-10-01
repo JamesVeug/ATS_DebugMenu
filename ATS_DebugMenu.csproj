@@ -4,7 +4,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <AssemblyName>DebugMenu</AssemblyName>
         <Description>UI Screen to change the game at runtime</Description>
-        <Version>2.0.0</Version>
+        <Version>2.0.1</Version>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>latest</LangVersion>
         <StormPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm</StormPath>
@@ -53,6 +53,18 @@
 
     <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Github\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Github\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Github\**" />
     </ItemGroup>
 
     <Target Name="Deploy" AfterTargets="Build">
