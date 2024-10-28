@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
+using System.IO;
 using ATS_API;
+using ATS_API.Helpers;
 using BepInEx;
 using BepInEx.Logging;
-using DebugMenu.Scripts.Popups;
+using DebugMenu.Scripts.UIToolKit;
+using Eremite;
 using HarmonyLib;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using Button = UnityEngine.UI.Button;
+using Image = UnityEngine.UI.Image;
 
 namespace DebugMenu
 {
@@ -26,7 +31,7 @@ namespace DebugMenu
 	    public static string PluginDirectory;
 	    public static float StartingFixedDeltaTime;
 
-	    public static List<BaseWindow> AllWindows = new();
+	    public static List<CanvasWindow> AllWindows = new();
 	    public static SaveData SaveData = null;
 	    
 	    private Harmony harmony;
@@ -35,11 +40,17 @@ namespace DebugMenu
 	    private List<WindowBlocker> activeRectTransforms = new List<WindowBlocker>();
 	    private List<WindowBlocker> rectTransformPool = new List<WindowBlocker>();
 
+	    private Canvas windowCanvas;
+	    private CanvasPrefabData canvasPrefabData = null;
+
 	    private void Awake()
 	    {
 		    Instance = this;
 		    Log = Logger;
 		    StartingFixedDeltaTime = Time.fixedDeltaTime;
+		    
+		    gameObject.hideFlags = HideFlags.HideAndDontSave;
+		    DontDestroyOnLoad(gameObject);
 
 		    PluginDirectory = this.Info.Location.Replace("DebugMenu.dll", "");
 
@@ -52,21 +63,52 @@ namespace DebugMenu
 		    blockerParent.AddComponent<GraphicRaycaster>();
 		    blockerParent.transform.SetParent(transform);
 
-		    Input.Initialize();
-		    harmony = Harmony.CreateAndPatchAll(typeof(Plugin).Assembly, PluginGuid);
-
-		    // Get all types of BaseWindow, instantiate them and add them to allwindows
-		    Type[] types = Assembly.GetExecutingAssembly().GetTypes();
-		    for (int i = 0; i < types.Length; i++)
+		    
+		    AssetBundle bundle = AssetBundle.LoadFromFile(Path.Combine(PluginDirectory, "Assets", "debugmenu"));
+		    if (bundle != null)
 		    {
-			    Type type = types[i];
-			    if (type.IsSubclassOf(typeof(BaseWindow)))
-			    {
-				    AllWindows.Add((BaseWindow)Activator.CreateInstance(type));
-			    }
+			    canvasPrefabData = new CanvasPrefabData(); 
+			    Log.LogInfo("Loading canvas");
+			    canvasPrefabData.WindowParent = Instantiate(bundle.LoadAsset<GameObject>("Canvas"), transform).transform;
+			    Assert(canvasPrefabData.WindowParent != null, "canvasPrefabData.WindowParent != null");
+			    
+			    Log.LogInfo("Loading row");
+			    canvasPrefabData.RowPrefab = bundle.LoadAsset<GameObject>("Row").SafeGetComponent<RectTransform>();
+			    Assert(canvasPrefabData.RowPrefab != null, "canvasPrefabData.RowPrefab != null");
+			    
+			    Log.LogInfo("Loading column");
+			    canvasPrefabData.ColumnPrefab = bundle.LoadAsset<GameObject>("Column").SafeGetComponent<RectTransform>();
+			    Assert(canvasPrefabData.ColumnPrefab != null, "canvasPrefabData.ColumnPrefab != null");
+			    
+			    Log.LogInfo("Loading Window");
+			    canvasPrefabData.WindowPrefab = bundle.LoadAsset<GameObject>("Window");
+			    Assert(canvasPrefabData.WindowPrefab != null, "canvasPrefabData.WindowPrefab != null");
+			    
+			    Log.LogInfo("Loading button");
+			    canvasPrefabData.ButtonPrefab = bundle.LoadAsset<GameObject>("Button").SafeGetComponent<Button>();
+			    Assert(canvasPrefabData.ButtonPrefab != null, "canvasPrefabData.ButtonPrefab != null");
+			    
+			    Log.LogInfo("Loading label");
+			    canvasPrefabData.LabelPrefab = bundle.LoadAsset<GameObject>("Label").SafeGetComponent<TMP_Text>();
+			    Assert(canvasPrefabData.LabelPrefab != null, "canvasPrefabData.LabelPrefab != null");
+			    
+			    Log.LogInfo("Loading label header");
+			    canvasPrefabData.HeaderLabelPrefab = canvasPrefabData.LabelPrefab; // TODO:
+			    
+			    Log.LogInfo("Loading toggle");
+			    canvasPrefabData.TogglePrefab = bundle.LoadAsset<GameObject>("Toggle").SafeGetComponent<Toggle>();
+			    Assert(canvasPrefabData.TogglePrefab != null, "canvasPrefabData.TogglePrefab != null");
+			    
+			    Log.LogFatal("Done");
 		    }
+		    else
+		    {
+			    Log.LogError("Failed to load asset bundle");
+			    return;
+		    }
+		    
+		    Input.Initialize();
 
-		    DontDestroyOnLoad(gameObject);
 		    
 		    // Load save data last so if it exceptions then the plugin still loads
 		    try
@@ -79,11 +121,16 @@ namespace DebugMenu
 			    SaveData = new SaveData();
 		    }
 		    
-		    Hotkeys.RegisterKey(PluginName, "toggleDebug", "Show/Hide Debug Menu", [KeyCode.Tilde], () =>
+		    
+		    Hotkeys.RegisterKey(PluginGuid, "OpenWindow", "Open Debug Menu", [KeyCode.Keypad9], () =>
 		    {
-			    Configs.ShowDebugMenu = !Configs.ShowDebugMenu;
+			    Logger.LogInfo("Opening Debug Menu");
+			    ToggleWindow<DebugWindow>();
 		    });
+		    
 
+
+		    harmony = Harmony.CreateAndPatchAll(typeof(Plugin).Assembly, PluginGuid);
 		    Logger.LogInfo($"Loaded {PluginName}");
 	    }
 
@@ -93,59 +140,40 @@ namespace DebugMenu
 	        {
 		        for (int i = 0; i < AllWindows.Count; i++)
 		        {
-			        if(AllWindows[i].IsActive)
+			        if(AllWindows[i].IsVisible)
 						AllWindows[i].Update();
 		        }
 	        }
         }
 
-        private void OnGUI()
-        {
-	        if (!Configs.ShowDebugMenu)
-		        return;
-	        
-	        for (int i = 0; i < AllWindows.Count; i++)
-	        {
-		        if(AllWindows[i].IsActive)
-					AllWindows[i].OnWindowGUI();
-	        }
-        }
-
-        public T ToggleWindow<T>() where T : BaseWindow, new()
+        public T ToggleWindow<T>() where T : CanvasWindow, new()
         {
 	        return (T)ToggleWindow(typeof(T));
         }
 
-        public BaseWindow ToggleWindow(Type t)
+        public CanvasWindow ToggleWindow(Type t)
         {
 	        for (int i = 0; i < AllWindows.Count; i++)
 	        {
-		        BaseWindow window = AllWindows[i];
+		        CanvasWindow window = AllWindows[i];
 		        if (window.GetType() == t)
 		        {
-			        window.IsActive = !window.IsActive;
+			        if (window.IsVisible)
+			        {
+				        window.gameObject.Destroy();
+				        AllWindows.RemoveAt(i);
+				        return null;
+			        }
+			        else
+			        {
+				        window.SetVisible(!window.IsVisible);
+			        }
+
 			        return window;
 		        }
 	        }
 
-	        return null;
-        }
-        
-        public T GetWindow<T>() where T : BaseWindow, new()
-		{
-			return (T)GetWindow(typeof(T));
-		}
-
-        public BaseWindow GetWindow(Type t)
-        {
-            for (int i = 0; i < AllWindows.Count; i++)
-            {
-                BaseWindow window = AllWindows[i];
-                if (window.GetType() == t)
-                    return window;
-            }
-
-            return null;
+	        return NewWindow(t);
         }
 
         public WindowBlocker CreateWindowBlocker()
@@ -187,5 +215,29 @@ namespace DebugMenu
 
 	        return false;
         }
+        
+        public CanvasWindow NewWindow(Type type)
+        {
+	        GameObject go = Instantiate(canvasPrefabData.WindowPrefab, canvasPrefabData.WindowParent).gameObject;
+	        CanvasWindow window = go.AddComponent(type).GetComponent<CanvasWindow>();
+	        window.Setup(canvasPrefabData);
+	        window.CreateGUI();
+	        
+	        AllWindows.Add(window);
+        
+	        return window;
+        }
+        
+        public void Assert(bool condition, string message)
+		{
+	        if (!condition)
+	        {
+		        Log.LogError(message);
+	        }
+	        else
+	        {
+		        Log.LogInfo("Condition passed: " + message);
+	        }
+		}
     }
 }

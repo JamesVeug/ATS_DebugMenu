@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using DebugMenu.Scripts.Popups;
 using DebugMenu.Scripts.Utils;
 using Eremite;
 using Eremite.Model;
@@ -11,7 +10,7 @@ using UnityEngine;
 
 namespace DebugMenu.Scripts.Acts;
 
-public class PerksWindow : BaseWindow
+public class PerksWindow : CanvasWindow
 {
 	private enum EffectType
 	{
@@ -48,9 +47,9 @@ public class PerksWindow : BaseWindow
 	private bool[] effectType = new bool[]{false,false,true};
 	private Dictionary<EffectRarity, bool> rarityFilter = new Dictionary<EffectRarity, bool>();
 
-	public override void OnGUI()
+	public override void CreateGUI()
 	{
-		base.OnGUI();
+		base.CreateGUI();
 
 		EffectsService effectsService = GameService.EffectsService as EffectsService;
 		if (effectsService == null)
@@ -78,7 +77,7 @@ public class PerksWindow : BaseWindow
 
 		const int scrollableColumnWidth = 300;
 		int namesCount = orderedEffects.Count; // 20
-		int rows = Mathf.Max(Mathf.FloorToInt((Size.y - TopOffset) / RowHeight) - 1, 1); // 600 / 40 = 15 
+		int rows = Mathf.Max(Mathf.FloorToInt((Size.y) / RowHeight) - 1, 1); // 600 / 40 = 15 
 		int columns = Mathf.CeilToInt((float)namesCount / rows) + 1; // 20 / 15 = 4
 		Rect scrollableAreaSize = new(new Vector2(0, 0), new Vector2(columns *  scrollableColumnWidth + (columns - 1) * 10, rows * RowHeight));
 		Rect scrollViewSize = new(new Vector2(0, 0), Size - new Vector2(10, 25));
@@ -100,30 +99,29 @@ public class PerksWindow : BaseWindow
 				continue;
 
 			int stacks = ownedPerk == null ? 0 : ownedPerk.stacks;
-			using (HorizontalScope(3))
+			using (HorizontalScope())
 			{
-				Label(cornerStone.GetIcon());
-				if(Button(isFavourited ? "\u2713" : "X", new Vector2(30, 0)))
+				Image(cornerStone.GetIcon());
+				Button(isFavourited ? "\u2713" : "X", () =>
 				{
 					if (isFavourited)
 						Plugin.SaveData.favouritedPerks.Remove(cornerStone.name);
 					else
 						Plugin.SaveData.favouritedPerks.Add(cornerStone.name);
 					SaveDataChanged();
-				}
-				
-				if(Button("-1", new Vector2(30, 0)))
+				});
+
+				Button("-1", () =>
 				{
 					cornerStone.Remove();
-				}
-				
-				if(Button("+1", new Vector2(30, 0)))
+				});
+
+				Button("+1", () =>
 				{
 					cornerStone.Apply();
-				}
+				});
 				
-				Vector2 nameSize = new Vector2(ColumnWidth - RowHeight*3, RowHeight);
-				Label($"{stacks}x ({cornerStone.rarity})\n{cornerStone.DisplayName}", nameSize);
+				Label($"{stacks}x ({cornerStone.rarity})\n{cornerStone.DisplayName}");
 			}
 		
 			j++;
@@ -139,38 +137,38 @@ public class PerksWindow : BaseWindow
 
 	private void DrawFilters()
 	{
-		Label("Filter", new(0, RowHeight / 2));
-		filterText = TextField(filterText, new(0, RowHeight / 2));
+		Label("Filter");
+		TextField(filterText, s => filterText = s);
 
-		Label("Favourite", new(0, RowHeight / 2));
-		RadialButtons(favourites, new[] { "Favourited", "NotFavourited" }, RowHeight / 2);
+		Label("Favourite");
+		RadialButtons(favourites, new[] { "Favourited", "NotFavourited" });
 		
-		Label("Ownership", new(0, RowHeight / 2));
-		RadialButtons(ownershipType, new[] { "Owned", "NotOwned" }, RowHeight / 2);
+		Label("Ownership");
+		RadialButtons(ownershipType, new[] { "Owned", "NotOwned" });
 		
-		Label("Benefit", new(0, RowHeight / 2));
-		RadialButtons(benefitType, new[] { "Positive", "Negative" }, RowHeight / 2);
+		Label("Benefit");
+		RadialButtons(benefitType, new[] { "Positive", "Negative" });
 
-		Label("Type", new(0, RowHeight / 2));
-		RadialButtons(effectType, Enum.GetNames(typeof(EffectType)).ToArray(), RowHeight / 2);
+		Label("Type");
+		RadialButtons(effectType, Enum.GetNames(typeof(EffectType)).ToArray());
 		
-		Label("Rarity", new(0, RowHeight / 2));
+		Label("Rarity");
 		foreach (EffectRarity rarity in Enum.GetValues(typeof(EffectRarity)))
 		{
 			RarityToggle(rarity);
 		}
 		
-		Label("Other", new(0, RowHeight / 2));
-		Toggle("Hide Missing Keys", ref hideEffectsWithMissingKeys);
+		Label("Other");
+		Toggle("Hide Missing Keys", hideEffectsWithMissingKeys, (a)=>hideEffectsWithMissingKeys=a);
 	}
 
 	private void RarityToggle(EffectRarity rarity)
 	{
 		bool o = rarityFilter[rarity];
-		if (Toggle(rarity.ToString(), ref o, new Vector2(ColumnWidth / 2, RowHeight / 2)))
+		Toggle(rarity.ToString(), o, (b) =>
 		{
-			rarityFilter[rarity] = !rarityFilter[rarity];
-		}
+			rarityFilter[rarity] = b;
+		});
 	}
 
 	private bool FilterEffect(EffectModel cornerStone, List<Effect> elements, int i, List<PerkState> ownedPerks, bool favourited,
@@ -211,19 +209,18 @@ public class PerksWindow : BaseWindow
 		return true;
 	}
 
-	private void RadialButtons(bool[] type, string[] buttons, float height)
+	private void RadialButtons(bool[] type, string[] buttons)
 	{
-		Vector2 size = new Vector2(ColumnWidth / buttons.Length, height);
-
-		using (HorizontalScope(buttons.Length))
+		using (HorizontalScope())
 		{
 			for (int i = 0; i < buttons.Length; i++)
 			{
 				bool o = type[i];
-				if (Toggle(buttons[i], ref o, size))
+				int index = i;
+				Toggle(buttons[i], o, (a) =>
 				{
-					type[i] = !type[i];
-				}
+					type[index] = a;
+				});
 			}
 		}
 	}

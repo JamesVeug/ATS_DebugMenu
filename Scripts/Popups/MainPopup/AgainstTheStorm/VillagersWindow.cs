@@ -9,17 +9,15 @@ using UnityEngine;
 
 namespace DebugMenu.Scripts.Acts;
 
-public class VillagersWindow : BaseWindow
+public class VillagersWindow : CanvasWindow
 {
 	public override string PopupName => "Villagers";
 	public override Vector2 Size => new(650, 420);
 	public override bool ClosableWindow => true;
-
-	private Vector2 position;
 	
-	public override void OnGUI()
+	public override void CreateGUI()
 	{
-		base.OnGUI();
+		base.CreateGUI();
 		var raceNames = new List<string>(Serviceable.VillagersService.Races.Keys);
 		
 		// Longer rows
@@ -27,10 +25,6 @@ public class VillagersWindow : BaseWindow
 		
 		int allRaceCount = raceNames.Count; // 20
 		int rows = Mathf.Max(Mathf.FloorToInt(Size.y / RowHeight) - 2, 1); // 600 / 40 = 15 
-		int columns = Mathf.CeilToInt((float)allRaceCount / rows) + 1; // 20 / 15 = 4
-		Rect scrollableAreaSize = new(new Vector2(0, 0), new Vector2(columns *  ColumnWidth + (columns - 1) * 10, rows * RowHeight));
-		Rect scrollViewSize = new(new Vector2(0, 0), Size - new Vector2(10, 25));
-		position = GUI.BeginScrollView(scrollViewSize, position, scrollableAreaSize);
 		
 		int j = 0;
 		for (int i = 0; i < allRaceCount; i++)
@@ -40,23 +34,31 @@ public class VillagersWindow : BaseWindow
 			int raceCount = villagers.Count;
 			RaceModel raceModel = raceName.ToRaceModel();
 
-			using (HorizontalScope(5))
+			using (HorizontalScope())
 			{
-				Label(raceModel.icon);
+				Image(raceModel.icon);
 				Label($"{raceCount}x\n{raceName}");
 
-				if (Button("+1"))
+				Button("+1", ()=>
 				{
 					SO.VillagersService.SpawnNewVillager(raceName.ToRaceModel());
-				}
-				if (Button("1 Leaves") && raceCount > 0)
+				});
+
+				Button("1 Leaves", () =>
 				{
-					villagers[raceCount - 1].Die(VillagerLossType.Leave, "DebugMenu", false);
-				}
-				if (Button("1 Dies") && raceCount > 0)
+					if (raceCount > 0)
+					{
+						villagers[raceCount - 1].Die(VillagerLossType.Leave, "DebugMenu", false);
+					}
+				});
+
+				Button("1 Dies", () =>
 				{
-					villagers[raceCount - 1].Die(VillagerLossType.Death, "DebugMenu", true);
-				}
+					if (raceCount > 0)
+					{
+						villagers[raceCount - 1].Die(VillagerLossType.Death, "DebugMenu", true);
+					}
+				});
 			}
 		
 			j++;
@@ -66,7 +68,5 @@ public class VillagersWindow : BaseWindow
 				j = 0;
 			}
 		}
-		
-		GUI.EndScrollView();
 	}
 }

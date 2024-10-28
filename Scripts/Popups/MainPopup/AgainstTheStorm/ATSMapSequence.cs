@@ -1,4 +1,7 @@
 ﻿using DebugMenu.Scripts.Acts;
+using DebugMenu.Scripts.UIToolKit;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace GameMode1;
 
@@ -16,8 +19,9 @@ public class ATSMapSequence : BaseMapSequence
 		this.Window = gameMode.Window;
 	}
 
-	public override void OnGUI()
+	public override void CreateGUI(RectTransform scopeContainer)
 	{
+		base.CreateGUI(scopeContainer);
 		// TODO:
 		// bool skipNextNode = ATSGameMode.SkipNextNode;
 		// if (Window.Toggle("Skip next node", ref skipNextNode))
@@ -29,6 +33,11 @@ public class ATSMapSequence : BaseMapSequence
   //
   //       Window.Toggle("Toggle Map Override", ref RegionOverride);
     }
+
+	public override void Update()
+	{
+		
+	}
 
 	public override void ToggleSkipNextNode()
 	{

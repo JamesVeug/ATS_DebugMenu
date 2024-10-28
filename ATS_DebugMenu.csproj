@@ -56,6 +56,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Include="Assets\*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
       <Compile Remove="Github\**" />
     </ItemGroup>
 
@@ -70,17 +73,19 @@
     <Target Name="Deploy" AfterTargets="Build">
         <ItemGroup>
             <Assembly Include="$(OutputPath)\$(AssemblyName).dll" />
+            <Assets Include="$(OutputPath)\Assets\*.*" />
         </ItemGroup>
 
         <!-- Create a folder with all the .dlls and files to easily uplaod to thunderstore -->
         <Copy SourceFiles="@(Assembly)" DestinationFolder="$(OutputPath)\ThunderStore\" />
+        <Copy SourceFiles="@(Assets)" DestinationFolder="$(OutputPath)\ThunderStore\plugins\Assets" />
         <Copy SourceFiles="README.md" DestinationFolder="$(OutputPath)\ThunderStore\" />
         <Copy SourceFiles="CHANGELOG.md" DestinationFolder="$(OutputPath)\ThunderStore\" />
         <Copy SourceFiles="manifest.json" DestinationFolder="$(OutputPath)\ThunderStore\" />
         <Copy SourceFiles="icon.png" DestinationFolder="$(OutputPath)\ThunderStore\" />
 
         <ItemGroup>
-            <_CopyItems Include="$(OutputPath)\ThunderStore\**\*.*" />
+            <_CopyItems Include="$(OutputPath)\ThunderStore\plugins\**\*.*" />
         </ItemGroup>
 
         <!-- Create a thunderstore folders to AgainstTheStorm game folder -->

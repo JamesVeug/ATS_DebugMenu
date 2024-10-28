@@ -9,13 +9,12 @@ using UnityEngine;
 
 namespace DebugMenu.Scripts.Acts;
 
-public class InventoryWindow : BaseWindow
+public class InventoryWindow : CanvasWindow
 {
 	public override string PopupName => "Inventory";
 	public override Vector2 Size => new(1000, 800);
 	public override bool ClosableWindow => true;
 	
-	private Vector2 position;
 	private string filterText = "";
 	private int amountToAdd = 1;
 	private bool showEatables = true;
@@ -26,9 +25,9 @@ public class InventoryWindow : BaseWindow
 	private bool hideEffectsWithMissingKeys = true;
 	private List<GoodModel> allGoods = null;
 
-	public override void OnGUI()
+	public override void CreateGUI()
 	{
-		base.OnGUI();
+		base.CreateGUI();
 
 		StorageService storageService = GameService.StorageService as StorageService;
 		if (storageService == null)
@@ -55,27 +54,27 @@ public class InventoryWindow : BaseWindow
 		int columns = Mathf.CeilToInt((float)namesCount / rows) + 1; // 20 / 15 = 4
 		Rect scrollableAreaSize = new(new Vector2(0, 0), new Vector2(columns *  ColumnWidth + (columns - 1) * 10, rows * RowHeight));
 		Rect scrollViewSize = new(new Vector2(0, 0), Size - new Vector2(10, 25));
-		position = GUI.BeginScrollView(scrollViewSize, position, scrollableAreaSize);
+		// position = GUI.BeginScrollView(scrollViewSize, position, scrollableAreaSize);
 		
-		Label("Amount to Give/Remove", new(0, RowHeight / 2));
-		amountToAdd = IntField(amountToAdd, new(0, RowHeight / 2));
+		Label("Amount to Give/Remove");
+		IntField(amountToAdd, i => amountToAdd = i); 
 
-		Label("Filter", new(0, RowHeight / 2));
-		filterText = TextField(filterText, new(0, RowHeight / 2));
+		Label("Filter");
+		TextField(filterText, s => filterText = s);
 
-		Label("Favourite", new(0, RowHeight / 2));
-		RadialButtons(favourites, new[] { "Favourited", "NotFavourited" }, RowHeight / 2);
+		Label("Favourite");
+		RadialButtons(favourites, new[] { "Favourited", "NotFavourited" });
 
-		Label("Ownership", new(0, RowHeight / 2));
-		RadialButtons(ownershipType, new[] { "Owned", "NotOwned" }, RowHeight / 2);
+		Label("Ownership");
+		RadialButtons(ownershipType, new[] { "Owned", "NotOwned" });
 		
-		Label("Categories", new(0, RowHeight / 2));
-		Toggle("Eatables", ref showEatables, new(0, RowHeight / 2));
-		Toggle("Fuels", ref showFuels, new(0, RowHeight / 2));
-		Toggle("Other", ref showOther, new(0, RowHeight / 2));
+		Label("Categories");
+		Toggle("Eatables", showEatables, b => showEatables = b);
+		Toggle("Fuels", showFuels, b => showFuels = b);
+		Toggle("Other", showOther, b => showOther = b);
 		
-		Label("Other", new(0, RowHeight / 2));
-		Toggle("Hide Missing Keys", ref hideEffectsWithMissingKeys);
+		Label("Other");
+		Toggle("Hide Missing Keys", hideEffectsWithMissingKeys, b => hideEffectsWithMissingKeys = b);
 		
 		StartNewColumn();
 		
@@ -91,29 +90,29 @@ public class InventoryWindow : BaseWindow
 				continue;
 
 			storage.goods.TryGetValue(good.name, out int amount);
-			using (HorizontalScope(4))
+			using (HorizontalScope())
 			{
-				Label(good.icon);
-				if(Button(isFavourited ? "\u2713" : "X", new Vector2(30, 0)))
+				Image(good.icon);
+				Button(isFavourited ? "\u2713" : "X", () =>
 				{
 					if (isFavourited)
 						Plugin.SaveData.favouritedGoods.Remove(good.name);
 					else
 						Plugin.SaveData.favouritedGoods.Add(good.name);
 					SaveDataChanged();
-				}
-				
-				if(Button("-", new Vector2(30, 0)))
+				});
+
+				Button("-", () =>
 				{
 					storage.Remove(good.name, amountToAdd);
-				}
-				if(Button("+", new Vector2(30, 0)))
+				});
+
+				Button("+", () =>
 				{
 					storage.Add(good.name, amountToAdd);
-				}
+				});
 				
-				Vector2 nameSize = new Vector2(ColumnWidth - RowHeight*3, RowHeight);
-				Label($"{amount}x\n{good.displayName}", nameSize);
+				Label($"{amount}x\n{good.displayName}");
 			}
 		
 			j++;
@@ -123,8 +122,6 @@ public class InventoryWindow : BaseWindow
 				j = 0;
 			}
 		}
-		
-		GUI.EndScrollView();
 	}
 
 	private bool IsFiltered(List<GoodModel> itemsInStorage, GoodModel good, bool favourited)
@@ -161,19 +158,18 @@ public class InventoryWindow : BaseWindow
 		return true;
 	}
 
-	private void RadialButtons(bool[] type, string[] buttons, float height)
+	private void RadialButtons(bool[] type, string[] buttons)
 	{
-		Vector2 size = new Vector2(ColumnWidth / buttons.Length, height);
-
-		using (HorizontalScope(buttons.Length))
+		using (HorizontalScope())
 		{
 			for (int i = 0; i < buttons.Length; i++)
 			{
 				bool o = type[i];
-				if (Toggle(buttons[i], ref o, size))
+				int index = i;
+				Toggle(buttons[i], o, b =>
 				{
-					type[i] = !type[i];
-				}
+					type[index] = b;
+				});
 			}
 		}
 	}

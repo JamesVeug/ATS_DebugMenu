@@ -1,102 +1,114 @@
-﻿using System.Collections.Generic;
-using ATS_API.Helpers;
-using DebugMenu;
-using DebugMenu.Scripts;
+﻿using DebugMenu;
 using DebugMenu.Scripts.Acts;
-using DebugMenu.Scripts.Popups;
 using Eremite;
-using Eremite.Characters.Villagers;
 using Eremite.Services;
+using TMPro;
+using UnityEngine;
 
 namespace GameMode1;
 
 public class ATSBattleSequence : BaseBattleSequence
 {
-    public ATSBattleSequence(BaseWindow window) : base(window)
+	private TMP_Text resoluteLabel;
+	private TMP_Text impatienceLabel;
+	
+    public ATSBattleSequence(CanvasWindow window) : base(window)
 	{
 		
 	}
 
-	public override void OnGUI()
+	public override void CreateGUI(RectTransform scopeContainer)
 	{
-		ReputationService reputationService = (ReputationService)SO.ReputationService;
-		using (window.HorizontalScope(2))
+		base.CreateGUI(scopeContainer);
+		
+		using (window.HorizontalScope())
 		{
 			// Reputation
-			using (window.VerticalScope(2))
+			using (window.VerticalScope())
 			{
-				window.Label("Reputation: " + reputationService.State.reputation + "/" +
-				             reputationService.GetReputationToWin());
-				using (window.HorizontalScope(2))
+				resoluteLabel = window.Label("Reputation: ");
+				using (window.HorizontalScope())
 				{
-					if (window.Button("+1"))
+					window.Button("+1", () =>
 					{
+						ReputationService reputationService = (ReputationService)SO.ReputationService;
 						reputationService.AddReputationPoints(1, ReputationChangeSource.Other);
-					}
+					});
 
-					if (window.Button("-1", disabled: () => new ADrawable.ButtonDisabledData("Not working")))
+					window.Button("-1", () =>
 					{
+						ReputationService reputationService = (ReputationService)SO.ReputationService;
 						reputationService.AddReputationPoints(-1, ReputationChangeSource.Other);
-					}
+					}, disabled: () => (true, "Not working"));
 				}
 			}
 
 			// Impatience
-			using (window.VerticalScope(2))
+			using (window.VerticalScope())
 			{
-				float impatience = reputationService.State.reputationPenalty;
-				int maxImpatience = reputationService.GetReputationPenaltyToLoose();
-				window.Label($"Impatience: {impatience:F1}/{maxImpatience:F1}");
-				using (window.HorizontalScope(2))
+				impatienceLabel = window.Label($"Impatience: ");
+				using (window.HorizontalScope())
 				{
-					if (window.Button("+1"))
+					window.Button("+1", () =>
 					{
+						ReputationService reputationService = (ReputationService)SO.ReputationService;
 						reputationService.AddReputationPenalty(1, ReputationChangeSource.Order, false);
-					}
+					});
 
-					if (window.Button("-1"))
+					window.Button("-1", () =>
 					{
+						ReputationService reputationService = (ReputationService)SO.ReputationService;
 						reputationService.AddReputationPenalty(-1, ReputationChangeSource.Other, false);
-					}
+					});
 				}
 			}
 		}
 
 		window.Padding();
-		
-		if (window.Button("Villagers"))
+
+		window.Button("Villagers", () =>
 		{
 			Plugin.Instance.ToggleWindow<VillagersWindow>();
-		}
-		
-		if (window.Button("Inventory"))
+		});
+
+		window.Button("Inventory", () =>
 		{
 			Plugin.Instance.ToggleWindow<InventoryWindow>();
-		}
-		
-		if (window.Button("Perks"))
+		});
+
+		window.Button("Perks", () =>
 		{
 			Plugin.Instance.ToggleWindow<PerksWindow>();
-		}
+		});
 
 		window.Padding();
 
-		using (window.HorizontalScope(2))
+		using (window.HorizontalScope())
 		{
-			if (window.Button("Win Now"))
+			window.Button("Win Now", () =>
 			{
+				ReputationService reputationService = (ReputationService)SO.ReputationService;
 				reputationService.ForceGameWin();
-			}
+			});
 
-			if (window.Button("Lose Now"))
+			window.Button("Lose Now", () =>
 			{
+				ReputationService reputationService = (ReputationService)SO.ReputationService;
 				if (!reputationService.State.finished)
 				{
 					reputationService.GameLost();
 				}
-			}
+			});
 		}
+	}
+
+	public override void Update()
+	{
+		ReputationService reputationService = (ReputationService)SO.ReputationService;
+		resoluteLabel.text = "Reputation: " + reputationService.State.reputation + "/" + reputationService.GetReputationToWin();
 		
-		base.OnGUI();
+		float impatience = reputationService.State.reputationPenalty;
+		int maxImpatience = reputationService.GetReputationPenaltyToLoose();
+		impatienceLabel.text = $"Impatience: {impatience:F1}/{maxImpatience:F1}";
 	}
 }

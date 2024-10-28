@@ -1,4 +1,5 @@
 ﻿using BepInEx.Logging;
+using DebugMenu.Scripts.UIToolKit;
 
 namespace DebugMenu.Scripts.Acts;
 
@@ -21,8 +22,7 @@ public abstract class BaseGameMode
 
     public virtual void Update() { }
 
-    public abstract void OnGUI();
-    public abstract void OnGUIMinimal();
+    public abstract void CreateGUI();
 
     public abstract void Reload();
     public abstract void Restart();

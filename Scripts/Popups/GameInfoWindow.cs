@@ -1,41 +1,30 @@
-﻿using UnityEngine;
+﻿using TMPro;
+using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 
 namespace DebugMenu.Scripts.Popups;
 
-public class GameInfoPopup : BaseWindow
+public class GameInfoPopup : CanvasWindow
 {
 	public override string PopupName => "Game Info";
 	public override Vector2 Size => new(220, 500);
 
 	public float updateInterval = 0.5F;
  
+	private TMP_Text fpsLabel;
+	private TMP_Text sceneLabel;
+	
 	private float lastInterval;
 	private int frames = 0;
 	private int fps;
 
-	public override void OnGUI()
+	public override void CreateGUI()
 	{
-		base.OnGUI();
+		base.CreateGUI();
 
-        Label("FPS: " + fps);
-
-        int sceneCount = SceneManager.sceneCount;		
-		LabelHeader($"Scenes ({sceneCount})");
-		Scene activeScene = SceneManager.GetActiveScene();
-
-		for (int i = 0; i < sceneCount; i++)
-		{
-			Scene scene = SceneManager.GetSceneAt(i);
-			if (scene == activeScene)
-			{
-				Label($"{i}: {scene.name} (Active)");
-			}
-			else
-			{
-				Label($"{i}: {scene.name}");
-			}
-		}
+		fpsLabel = Label("FPS: " + fps);
+		sceneLabel = Label("Scenes: ");
 	}
 
 	public override void Update()
@@ -49,6 +38,25 @@ public class GameInfoPopup : BaseWindow
 			fps = (int)(frames / (timeNow - lastInterval));
 			frames = 0;
 			lastInterval = timeNow;
+		}
+		fpsLabel.text = "FPS: " + fps;
+		
+		int sceneCount = SceneManager.sceneCount;		
+		
+		sceneLabel.text = $"Scenes ({sceneCount})";
+		Scene activeScene = SceneManager.GetActiveScene();
+
+		for (int i = 0; i < sceneCount; i++)
+		{
+			Scene scene = SceneManager.GetSceneAt(i);
+			if (scene == activeScene)
+			{
+				sceneLabel.text += $"\n{i}: {scene.name} (Active)";
+			}
+			else
+			{
+				sceneLabel.text += $"\n{i}: {scene.name}";
+			}
 		}
 	}
 }

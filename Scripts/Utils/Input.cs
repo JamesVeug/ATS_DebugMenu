@@ -1,5 +1,6 @@
 ﻿using DebugMenu;
 using DebugMenu.Scripts.Acts;
+using DebugMenu.Scripts.UIToolKit;
 using Eremite;
 using Eremite.Services;
 using Eremite.View.Cameras;
@@ -30,13 +31,14 @@ public static class Input
         blockerParent.SetActive(false);
     }
     
-    public static void DrawToggleBlockInput(DebugWindow window)
+    public static void DrawToggleBlockInput(CanvasWindow window)
     {
-        if (window.Toggle("Block All Input", ref blockAllInput))
+        window.Toggle("Block All Input", blockAllInput, b =>
         {
             Plugin.Log.LogInfo($"Block all input: {blockAllInput}");
+            blockAllInput = b;
             blockerParent.SetActive(blockAllInput);
-        }
+        });
     }
     
     [HarmonyPatch(typeof(InputConfig), MethodType.Constructor)]

@@ -1,5 +1,6 @@
 ﻿using DebugMenu.Scripts.Acts;
 using DebugMenu.Scripts.Popups;
+using DebugMenu.Scripts.UIToolKit;
 using UnityEngine;
 
 namespace DebugMenu.Scripts.All;
@@ -15,62 +16,56 @@ public class AllGameModes : BaseGameMode
 		
 	}
 	
-	public override void OnGUI()
+	public override void CreateGUI()
 	{
 		Input.DrawToggleBlockInput(Window);
 
-		using (Window.HorizontalScope(5))
+		using (Window.HorizontalScope())
 		{
-			Window.Label("<b>Time Scale:</b>");
-			
-			if (Window.Button("0x"))
+			Window.Label("<b>Time\nScale:</b>");
+
+			Window.Button("0x", () =>
 			{
 				SetTimeScale(0f);
-			}
+			});
 
-			if (Window.Button("1x"))
+			Window.Button("1x", () =>
 			{
 				SetTimeScale(1f);
-			}
+			});
 
-			if (Window.Button("5x"))
+			Window.Button("5x", () =>
 			{
 				SetTimeScale(5f);
-			}
+			});
 
-			if (Window.Button("10x"))
+			Window.Button("10x", () =>
 			{
 				SetTimeScale(10f);
-			}
+			});
 		}
 
-        if (Window.Button("Show Game Info"))
+		Window.Button("Show Game Info", () =>
 		{
 			Plugin.Instance.ToggleWindow<GameInfoPopup>();
-		}
+		});
 
-		using (Window.HorizontalScope(4))
+		using (Window.HorizontalScope())
 		{
 			Window.Label("<b>Menu Scale:</b>");
 			Window.Label($"{DrawableGUI.GetDisplayScalar()}x");
 
-			int sizeAsInt = (int)Configs.WindowSize;
-            if (Window.Button("-", disabled: () => new() { Disabled = sizeAsInt <= 0 }))
-            {
-                sizeAsInt--;
-                Configs.WindowSize = (Configs.WindowSizes)sizeAsInt;
-            }
-            if (Window.Button("+", disabled: () => new() { Disabled = sizeAsInt > 6 }))
+			Window.Button("-", () =>
+		    {
+			    Configs.WindowSize = (Configs.WindowSizes)((int)Configs.WindowSize - 1);
+			    
+		    }, disabled: () => ((int)Configs.WindowSize <= 0,""));
+			
+            Window.Button("+", ()=>
 			{
-				sizeAsInt++;
-				Configs.WindowSize = (Configs.WindowSizes)sizeAsInt;
-			}
+				Configs.WindowSize = (Configs.WindowSizes)((int)Configs.WindowSize + 1);
+			}, disabled: () => ((int)Configs.WindowSize > 6,""));
 		}
-	}
-
-	public override void OnGUIMinimal()
-	{
-		
 	}
 
 	public void SetTimeScale(float speed)

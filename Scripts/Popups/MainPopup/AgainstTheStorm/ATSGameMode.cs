@@ -1,5 +1,6 @@
 ﻿using DebugMenu;
 using DebugMenu.Scripts.Acts;
+using DebugMenu.Scripts.UIToolKit;
 using DebugMenu.Scripts.Utils;
 using Eremite.Model.State;
 using UnityEngine;
@@ -17,46 +18,74 @@ public class ATSGameMode : BaseGameMode
 		m_battleSequence = new ATSBattleSequence(window);
 	}
 
-	public override void OnGUI()
+	public override void CreateGUI()
 	{
 		Window.LabelHeader("Against The Storm");
-		
-        // Window.StartNewColumn();
 
-        OnGUICurrentNode();
+		using (var scope = Window.VerticalScope())
+		{
+			m_mapSequence.CreateGUI(scope.container);
+		}
+
+		using (var scope = Window.VerticalScope())
+		{
+			m_battleSequence.CreateGUI(scope.container);
+		}
+
+		// OnGUICurrentNode();
     }
 
-	public override void OnGUIMinimal()
+	public override void Update()
 	{
-		OnGUICurrentNode();
-	}
+		base.Update();
 
-	private void OnGUICurrentNode()
-	{
+		m_battleSequence.ToggleVisible(Helpers.IsInGame);
+		m_mapSequence.ToggleVisible(!Helpers.IsInGame);
+		
 		if (Helpers.IsInGame)
 		{
 			// Show game related buttons
-			m_battleSequence.OnGUI();
+			m_battleSequence.Update();
 		}
 		else
 		{
 			// Show main menu related buttons
-			m_mapSequence.OnGUI();
+			m_mapSequence.Update();
 		}
 	}
-	
-	private void OnGUICardChoiceNodeSequence()
-	{
-		// CardSingleChoicesSequencer sequencer = Singleton<SpecialNodeHandler>.Instance.cardChoiceSequencer;
-		// Window.Label("Sequencer: " + sequencer, new(0, 80));
-		// if (Window.Button("Reroll choices"))
-		// 	sequencer.OnRerollChoices();
-	}
 
-	private void OnGUIMap()
-	{
-		m_mapSequence.OnGUI();
-	}
+
+	// public override void OnGUIMinimal()
+	// {
+	// 	OnGUICurrentNode();
+	// }
+	//
+	// private void OnGUICurrentNode()
+	// {
+	// 	if (Helpers.IsInGame)
+	// 	{
+	// 		// Show game related buttons
+	// 		m_battleSequence.OnGUI();
+	// 	}
+	// 	else
+	// 	{
+	// 		// Show main menu related buttons
+	// 		m_mapSequence.OnGUI();
+	// 	}
+	// }
+	//
+	// private void OnGUICardChoiceNodeSequence()
+	// {
+	// 	// CardSingleChoicesSequencer sequencer = Singleton<SpecialNodeHandler>.Instance.cardChoiceSequencer;
+	// 	// Window.Label("Sequencer: " + sequencer, new(0, 80));
+	// 	// if (Window.Button("Reroll choices"))
+	// 	// 	sequencer.OnRerollChoices();
+	// }
+	//
+	// private void OnGUIMap()
+	// {
+	// 	m_mapSequence.OnGUI();
+	// }
 
 	public override void Restart()
 	{

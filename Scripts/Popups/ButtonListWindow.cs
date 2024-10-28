@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DebugMenu.Scripts.Popups;
 
-public class ButtonListPopup : BaseWindow
+public class ButtonListPopup : CanvasWindow
 {
 	public override string PopupName => popupNameOverride;
 	public override Vector2 Size => new(630, 600);
@@ -19,28 +19,28 @@ public class ButtonListPopup : BaseWindow
 	private Vector2 position;
 	private string disableMatch;
 
-	public override void OnGUI()
+	public override void CreateGUI()
 	{
-		base.OnGUI();
+		base.CreateGUI();
 		
 		int namesCount = buttonNames.Count; // 20
-		int rows = Mathf.Max(Mathf.FloorToInt(Size.y / RowHeight) - 2, 1); // 600 / 40 = 15 
-		int columns = Mathf.CeilToInt((float)namesCount / rows) + 1; // 20 / 15 = 4
-		Rect scrollableAreaSize = new(new Vector2(0, 0), new Vector2(columns *  ColumnWidth + (columns - 1) * 10, rows * RowHeight));
-		Rect scrollViewSize = new(new Vector2(0, 0), Size - new Vector2(10, 25));
-		position = GUI.BeginScrollView(scrollViewSize, position, scrollableAreaSize);
+		int rows = Mathf.Max(Mathf.FloorToInt(Size.y / 50) - 2, 1); // 600 / 40 = 15 
+		// int columns = Mathf.CeilToInt((float)namesCount / rows) + 1; // 20 / 15 = 4
+		// Rect scrollableAreaSize = new(new Vector2(0, 0), new Vector2(columns *  ColumnWidth + (columns - 1) * 10, rows * RowHeight));
+		// Rect scrollViewSize = new(new Vector2(0, 0), Size - new Vector2(10, 25));
+		// position = GUI.BeginScrollView(scrollViewSize, position, scrollableAreaSize);
 		
 		LabelHeader(header);
 
-		Label("Filter", new(0, RowHeight / 2));
-		filterText = TextField(filterText, new(0, RowHeight / 2));
+		Label("Filter");
+		TextField(filterText, s => filterText = s);
 
 		DrawExtraTools();
 
 		StartNewColumn();
 		
 		int j = 0;
-		for (int i = 0; i < namesCount; i++)
+		for (int i = 0; i < buttonNames.Count; i++)
 		{
 			string buttonName = buttonNames[i];
 			string buttonValue = buttonValues[i];
@@ -56,11 +56,12 @@ public class ButtonListPopup : BaseWindow
 			if(!IsFiltered(buttonName, buttonValue))
 				continue;
 
-			if (Button(buttonName, disabled: () => new() { Disabled = buttonValue == disableMatch }))
+			int index = i;
+			Button(buttonName, () =>
 			{
-				callback(i, buttonValue, disableMatch);
+				callback(index, buttonValue, disableMatch);
 				Plugin.Instance.ToggleWindow<ButtonListPopup>();
-			}
+			}, disabled: () => (buttonValue == disableMatch, ""));
 
 			j++;
 			if (j >= rows)
@@ -69,8 +70,6 @@ public class ButtonListPopup : BaseWindow
 				j = 0;
 			}
 		}
-		
-		GUI.EndScrollView();
 	}
 
 	public virtual bool IsFiltered(string buttonName, string buttonValue)
