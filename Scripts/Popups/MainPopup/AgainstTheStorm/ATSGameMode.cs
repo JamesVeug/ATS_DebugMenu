@@ -3,14 +3,12 @@ using DebugMenu.Scripts.Acts;
 using DebugMenu.Scripts.Utils;
 using Eremite.Model.State;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace GameMode1;
 
 public class ATSGameMode : BaseGameMode
 {
-	public static bool SkipNextNode = false;
-	public static bool ActivateAllMapNodesActive = false;
-
 	public ATSGameMode(DebugWindow window) : base(window)
 	{
 		m_mapSequence = new ATSMapSequence(this);
@@ -33,12 +31,13 @@ public class ATSGameMode : BaseGameMode
 
 	private void OnGUICurrentNode()
 	{
-		if (Helpers.IsInGame)
+		string mapName = SceneManager.GetActiveScene().name;
+		if (mapName == "Game")
 		{
 			// Show game related buttons
 			m_battleSequence.OnGUI();
 		}
-		else
+		else if (mapName == "WorldMap")
 		{
 			// Show main menu related buttons
 			m_mapSequence.OnGUI();
