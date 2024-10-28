@@ -84,12 +84,12 @@
         </ItemGroup>
 
         <!-- Create a thunderstore folders to AgainstTheStorm game folder -->
-        <Copy SourceFiles="@(_CopyItems)" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\%(RecursiveDir)" />
-        <Copy SourceFiles="README.md" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\" />
-        <Copy SourceFiles="CHANGELOG.md" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\" />
-        <Copy SourceFiles="manifest.json" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\" />
-        <Copy SourceFiles="icon.png" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\" />
-        <Copy SourceFiles="@(Assembly)" DestinationFolder="$(BepInExPath)\plugins\JamesGames-DebugMenu\" />
+        <Copy SourceFiles="@(_CopyItems)" DestinationFolder="$(BepInExPath)\plugins\ATS_DebugMenu-DebugMenu\%(RecursiveDir)" />
+        <Copy SourceFiles="README.md" DestinationFolder="$(BepInExPath)\plugins\ATS_DebugMenu-DebugMenu\" />
+        <Copy SourceFiles="CHANGELOG.md" DestinationFolder="$(BepInExPath)\plugins\ATS_DebugMenu-DebugMenu\" />
+        <Copy SourceFiles="manifest.json" DestinationFolder="$(BepInExPath)\plugins\ATS_DebugMenu-DebugMenu\" />
+        <Copy SourceFiles="icon.png" DestinationFolder="$(BepInExPath)\plugins\ATS_DebugMenu-DebugMenu\" />
+        <Copy SourceFiles="@(Assembly)" DestinationFolder="$(BepInExPath)\plugins\ATS_DebugMenu-DebugMenu\" />
 
         <!-- Run Against The Storm -->
         <!--         <Exec Command='call "$(StormPath)/Against The Storm.exe"' IgnoreExitCode="true"/>-->
