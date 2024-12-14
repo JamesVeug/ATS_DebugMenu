@@ -34,7 +34,7 @@ public static class Input
     {
         if (window.Toggle("Block All Input", ref blockAllInput))
         {
-            Plugin.Log.LogInfo($"Block all input: {blockAllInput}");
+            // Plugin.Log.LogInfo($"Block all input: {blockAllInput}");
             blockerParent.SetActive(blockAllInput);
         }
     }
