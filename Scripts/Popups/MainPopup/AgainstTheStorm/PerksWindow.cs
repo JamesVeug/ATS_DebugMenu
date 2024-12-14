@@ -251,7 +251,6 @@ public class PerksWindow : BaseWindow
 			.Concat(Serviceable.Biome.effects)
 			.Concat(Serviceable.Biome.seasons.SeasonRewards.SelectMany((SeasonRewardModel m) =>
 				m.effectsTable.GetAllEffects()))
-			.Concat(Serviceable.Biome.earlyEffects)
 			orderby e.IsPositive, e.DisplayName
 			select e).Concat(from e in modifiers select e.effect);
 		foreach (var effect in models)
