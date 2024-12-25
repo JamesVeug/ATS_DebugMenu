@@ -82,6 +82,7 @@ namespace DebugMenu
 		    Hotkeys.RegisterKey(PluginName, "toggleDebug", "Show/Hide Debug Menu", [KeyCode.Tilde], () =>
 		    {
 			    Configs.ShowDebugMenu = !Configs.ShowDebugMenu;
+			    blockerParentCanvas.enabled = Configs.ShowDebugMenu;
 		    });
 
 		    Logger.LogInfo($"Loaded {PluginName}");
