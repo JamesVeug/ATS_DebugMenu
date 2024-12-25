@@ -1,3 +1,6 @@
+# 2.0.3
+- Fixed not being able to click on things when hiding the debug menu with `~`
+
 # 2.0.2
 - Fixed Debug Menu not working in perks screen
 - Removed log spam when disabling input
