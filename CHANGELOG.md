@@ -1,9 +1,12 @@
+# 2.0.2
+- Fixed Debug Menu not working in perks screen
+- Removed log spam when disabling input
+
 # 2.0.1
 - Fixed hotkey not working or showing in the options menu
 
 # 2.0.0
 - Bumped ATS version to 1.4.4R + DLC
-
 
 # 1.1.0
 - General

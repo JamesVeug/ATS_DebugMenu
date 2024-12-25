@@ -25,7 +25,7 @@ This popup will have 3 buttons at the top left.
 2. Install the BepInEx mod
 3. Install the API mod
 4. Install the Debug Menu mod
-3. Run game using Thunderstore
+5. Run game using Thunderstore
 
 
 ## Manual Installation
